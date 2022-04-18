@@ -5,12 +5,14 @@
 #include <QDebug>
 
 #include "CodeEdit.h"
+#include "TabManager.h"
 
 CodeEdit::CodeEdit(QWidget *parent, const QString &fileAbsolutePath)
     : QPlainTextEdit(parent),
       openedFileInfo(fileAbsolutePath),
       lineNumberArea(new LineNumberArea(this)),
-      highlighter(new Highlighter(this->document()))
+      highlighter(new Highlighter(this->document())),
+      _textChanged(false)
 {
     this->setTabStopWidth(40);
     this->setTabStopDistance(40.00);
@@ -21,6 +23,8 @@ CodeEdit::CodeEdit(QWidget *parent, const QString &fileAbsolutePath)
     connect(this, &CodeEdit::blockCountChanged, this, &CodeEdit::updateLineNumberAreaWidth);
     connect(this, &CodeEdit::updateRequest, this, &CodeEdit::updateLineNumberArea);
     connect(this, &CodeEdit::cursorPositionChanged, this, &CodeEdit::highlightCurrentLine);
+
+    connect(this, &CodeEdit::textChanged, this, &CodeEdit::onTextChanged);
 
     this->updateLineNumberAreaWidth(0);
     this->highlightCurrentLine();
@@ -154,4 +158,19 @@ void CodeEdit::highlightCurrentLine()
     }
 
     this->setExtraSelections(extraSelections);
+}
+
+bool CodeEdit::textHasChanged() const
+{
+    return this->_textChanged;
+}
+
+void CodeEdit::setTextChangedStatus(bool changed)
+{
+    this->_textChanged = changed;
+}
+
+void CodeEdit::onTextChanged()
+{
+    emit codeEditTextChanged(true);
 }

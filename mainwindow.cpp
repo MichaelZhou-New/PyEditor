@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     fileBrowserSortFilterProxyModel->setSourceModel(fileSystemModel);
     fileBrowser->setModel(fileBrowserSortFilterProxyModel);
 
-    const QModelIndex rootIndex = fileSystemModel->index("E:\\Personal\\Workspaces\\CppPrimer\\SourceCode\\");
+    const QModelIndex rootIndex = fileSystemModel->index(QDir::cleanPath(""));
     if (rootIndex.isValid()) {
         fileBrowser->setRootIndex(fileBrowserSortFilterProxyModel->mapFromSource(rootIndex));
     }
@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
     fileBrowser->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     fileBrowser->show();
     fileBrowser->resize(200, fileBrowser->height());
+    fileBrowser->setWindowTitle(tr("资源管理器"));
 
     // setting tabManager
     tabManager->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -73,7 +74,7 @@ MainWindow::MainWindow(QWidget *parent)
     // set connection
     connect(ui->newFileAction, &QAction::triggered, this->tabManager, &TabManager::onNewFileActionTriggered);
     connect(ui->openFileAction, &QAction::triggered, this->tabManager, &TabManager::onOpenFileActionTriggered);
-    connect(ui->openFolderAction, &QAction::triggered, this, &MainWindow::onOpenFolder);
+    connect(ui->openFolderAction, &QAction::triggered, this, &MainWindow::onOpenFolderTriggered);
     connect(ui->saveFileAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileActionTriggered);
     connect(ui->saveFileAsAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileAsActionTriggered);
 
@@ -85,7 +86,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::onOpenFolder()
+void MainWindow::onOpenFolderTriggered()
 {
     QFileDialog dirDialog;
     dirDialog.setFileMode(QFileDialog::DirectoryOnly);

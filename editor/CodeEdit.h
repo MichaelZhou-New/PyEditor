@@ -17,6 +17,14 @@ public:
 
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
+    bool textHasChanged() const;
+
+signals:
+    void codeEditTextChanged(bool changed);
+
+public slots:
+    void setTextChangedStatus(bool hasModified = true);
+    void onTextChanged();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -33,6 +41,7 @@ public:
 private:
     LineNumberArea *lineNumberArea;
     Highlighter *highlighter;
+    bool _textChanged;
 };
 
 #endif // CODEEDIT_H

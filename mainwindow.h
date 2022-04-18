@@ -23,7 +23,7 @@ public:
     ~MainWindow();
 
 public slots:
-    void onOpenFolder();
+    void onOpenFolderTriggered();
     void onTreeViewDoubleClicked(const QModelIndex &index);
 
 private:

@@ -14,6 +14,7 @@ public:
 
 public slots:
     void onCloseTabRequest(int tabIndex);
+    void onCodeEditChanged(bool changed = true);
     void onNewFileActionTriggered();
     void onOpenFileActionTriggered();
     void onSaveFileActionTriggered();

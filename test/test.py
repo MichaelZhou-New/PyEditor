@@ -28,3 +28,6 @@ if __name__=='__main__':
     test()
 
 # test saving file
+
+
+# test mark of file changed

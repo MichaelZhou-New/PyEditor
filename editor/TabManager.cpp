@@ -9,6 +9,10 @@
 #include "TabManager.h"
 #include "CodeEdit.h"
 
+/**
+ * @brief TabManager::TabManager
+ * @param parent
+ */
 TabManager::TabManager(QWidget *parent)
     : QTabWidget(parent)
 {
@@ -17,8 +21,14 @@ TabManager::TabManager(QWidget *parent)
     this->setTabsClosable(true);
 
     connect(this, &TabManager::tabCloseRequested, this, &TabManager::onCloseTabRequest);
+
+    qDebug() << "tabManager: " << hex << this;
 }
 
+/**
+ * @brief TabManager::openFile
+ * @param fileAbsolutePath
+ */
 void TabManager::openFile(const QString &fileAbsolutePath)
 {
     QFile file(fileAbsolutePath);
@@ -38,8 +48,14 @@ void TabManager::openFile(const QString &fileAbsolutePath)
     currentCodeEdit->setPlainText(in.readAll());
 
     file.close();
+
+    connect(currentCodeEdit, &CodeEdit::modificationChanged, this, &TabManager::onCodeEditChanged);
 }
 
+/**
+ * @brief TabManager::openFiles
+ * @param fileAbsolutePaths
+ */
 void TabManager::openFiles(const QStringList &fileAbsolutePaths)
 {
     for (QStringList::size_type i = 0; i < fileAbsolutePaths.size(); i++) {
@@ -61,6 +77,8 @@ void TabManager::openFiles(const QStringList &fileAbsolutePaths)
         currentCodeEdit->setPlainText(in.readAll());
 
         file.close();
+
+        connect(currentCodeEdit, &CodeEdit::modificationChanged, this, &TabManager::onCodeEditChanged, Qt::UniqueConnection);
     }
 }
 
@@ -74,35 +92,69 @@ void TabManager::onCloseTabRequest(int tabIndex)
     // get current tab from tabManager
     CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(this->widget(tabIndex));
 
-    QMessageBox messageBox;
-    messageBox.setText(tr("是否要保存对 ") + currentCodeEdit->openedFileInfo.fileName() + tr(" 的更改？"));
-    messageBox.setInformativeText(tr("如果不保存，你的更改将丢失。"));
-    messageBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-    messageBox.setIcon(QMessageBox::Warning);
-    messageBox.exec();
+    if (currentCodeEdit->textHasChanged()) {
+        QMessageBox messageBox;
+        messageBox.setText(tr("是否要保存对 ") + currentCodeEdit->openedFileInfo.fileName() + tr(" 的更改？"));
+        messageBox.setInformativeText(tr("如果不保存，你的更改将丢失。"));
+        messageBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        messageBox.setIcon(QMessageBox::Warning);
+        messageBox.exec();
 
-    if (!(messageBox.clickedButton() == messageBox.button(QMessageBox::Cancel))) {
-        if (messageBox.clickedButton() == messageBox.button(QMessageBox::Yes)) {
-            this->onSaveFileActionTriggered();
+        if (!(messageBox.clickedButton() == messageBox.button(QMessageBox::Cancel))) {
+            if (messageBox.clickedButton() == messageBox.button(QMessageBox::Yes)) {
+                this->onSaveFileActionTriggered();
+            }
+            this->removeTab(tabIndex);
+            delete this->widget(tabIndex);
         }
+    } else {
         this->removeTab(tabIndex);
         delete this->widget(tabIndex);
     }
 }
 
-/*
+/**
+ * @brief TabManager::onCodeEditModified
+ * @param hasModified
+ */
+void TabManager::onCodeEditChanged(bool changed)
+{
+    CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(this->currentWidget());
+    int tabIndex = this->indexOf(currentCodeEdit);
+
+    bool oldChanged = currentCodeEdit->textHasChanged();
+
+    if (tabIndex != -1) {
+        if (oldChanged== true && changed == false) {
+            // change file name
+            this->setTabText(tabIndex, currentCodeEdit->openedFileInfo.fileName());
+            connect(currentCodeEdit, &CodeEdit::codeEditTextChanged, this, &TabManager::onCodeEditChanged, Qt::UniqueConnection);
+        } else if (oldChanged== false && changed == true) {
+            // change file name
+            this->setTabText(tabIndex, currentCodeEdit->openedFileInfo.fileName() + " *");
+            disconnect(currentCodeEdit, &CodeEdit::codeEditTextChanged, this, &TabManager::onCodeEditChanged);
+        }
+        currentCodeEdit->setTextChangedStatus(changed);
+    }
+}
+
+/**
  * add new file
+ * @brief TabManager::onNewFileActionTriggered
  */
 void TabManager::onNewFileActionTriggered()
 {
     CodeEdit *currentCodeEdit = new CodeEdit(this);
     this->addTab(currentCodeEdit, tr("untitled"));
     this->setCurrentWidget(currentCodeEdit);
+
+    connect(currentCodeEdit, &CodeEdit::codeEditTextChanged, this, &TabManager::onCodeEditChanged, Qt::UniqueConnection);
 }
 
-/*
+/**
  *  open file from disk, create a new file tab,
  *  read text and then put text in codeedit
+ * @brief TabManager::onOpenFileActionTriggered
  */
 void TabManager::onOpenFileActionTriggered()
 {
@@ -113,31 +165,12 @@ void TabManager::onOpenFileActionTriggered()
 
     this->openFiles(fileAbsolutePaths);
 
-//    for (QStringList::size_type i = 0; i < fileAbsolutePaths.size(); i++) {
-//        const QString &filePath = fileAbsolutePaths[i];
-//        QFile file(filePath);
-//        QFileInfo fileInfo(filePath);
-//        if (!file.open(QFile::ReadOnly | QFile::Text)) {
-//            QMessageBox::warning(this, "Warning", "Cannot open file: " + file.errorString());
-//            continue;
-//        }
-
-//        QTextStream in(&file);
-
-//        // add new tab
-//        CodeEdit *currentCodeEdit = new CodeEdit(this, filePath);
-
-//        this->addTab(currentCodeEdit, fileInfo.fileName());
-//        this->setCurrentWidget(currentCodeEdit);
-//        currentCodeEdit->setPlainText(in.readAll());
-
-//        file.close();
-//    }
 }
 
-/*
+/**
  * save file
- **/
+ * @brief TabManager::onSaveFileActionTriggered
+ */
 void TabManager::onSaveFileActionTriggered()
 {
     CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(this->currentWidget());
@@ -156,11 +189,14 @@ void TabManager::onSaveFileActionTriggered()
 
     file.write(currentCodeEdit->toPlainText().toLocal8Bit());
     file.close();
+
+    this->onCodeEditChanged(false);
 }
 
-/*
+/**
  * save file as other file
- * */
+ * @brief TabManager::onSaveFileAsActionTriggered
+ */
 void TabManager::onSaveFileAsActionTriggered()
 {
 
@@ -184,5 +220,8 @@ void TabManager::onSaveFileAsActionTriggered()
         this->setTabText(this->currentIndex(), fileInfo.fileName());
 
         file.close();
+
+        this->onCodeEditChanged(false);
     }
+
 }
