@@ -11,24 +11,41 @@ CONFIG += c++20
 include(./lsp/lsp.pri)
 
 SOURCES += \
+#    CategoryListView.cpp \
+#    CategoryListViewDelegate.cpp \
+    SearchDialog.cpp \
+    SettingDialog.cpp \
     editor/CodeEdit.cpp \
     editor/LineNumberArea.cpp \
     editor/TabManager.cpp \
     fileBrowser/FileBrowserSortFilterProxyModel.cpp \
     highlighter/highlighter.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    settings/AppearanceSettingPage.cpp \
+    settings/EditorSettingPage.cpp \
+    settings/KitsSettingPage.cpp \
+    settings/SettingPage.cpp
 
 HEADERS += \
+#    CategoryListView.h \
+#    CategoryListViewDelegate.h \
+    SearchDialog.h \
+    SettingDialog.h \
     editor/CodeEdit.h \
     editor/LineNumberArea.h \
     editor/TabManager.h \
     fileBrowser/FileBrowserSortFilterProxyModel.h \
     highlighter/highlighter.h \
-    mainwindow.h
+    mainwindow.h \
+    settings/AppearanceSettingPage.h \
+    settings/EditorSettingPage.h \
+    settings/KitsSettingPage.h \
+    settings/SettingPage.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    searchdialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

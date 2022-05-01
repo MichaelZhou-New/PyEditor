@@ -8,6 +8,12 @@ FileBrowserSortFilterProxyModel::FileBrowserSortFilterProxyModel(QObject *parent
 
 }
 
+/**
+ * @brief FileBrowserSortFilterProxyModel::lessThan
+ * @param left
+ * @param right
+ * @return
+ */
 bool FileBrowserSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
     // If sorting by file names column

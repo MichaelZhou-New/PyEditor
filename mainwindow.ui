@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>910</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="edit">
@@ -59,8 +59,15 @@
     </property>
     <addaction name="aboutAction"/>
    </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>搜索(S)</string>
+    </property>
+    <addaction name="searchAction"/>
+   </widget>
    <addaction name="file"/>
    <addaction name="edit"/>
+   <addaction name="menu"/>
    <addaction name="help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
@@ -203,6 +210,14 @@
    </property>
    <property name="toolTip">
     <string>打开文件夹...</string>
+   </property>
+  </action>
+  <action name="searchAction">
+   <property name="text">
+    <string>查找...</string>
+   </property>
+   <property name="iconText">
+    <string>查找</string>
    </property>
   </action>
  </widget>

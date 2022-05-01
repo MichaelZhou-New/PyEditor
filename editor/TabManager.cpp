@@ -22,7 +22,7 @@ TabManager::TabManager(QWidget *parent)
 
     connect(this, &TabManager::tabCloseRequested, this, &TabManager::onCloseTabRequest);
 
-    qDebug() << "tabManager: " << hex << this;
+    qDebug() << "tabManager: " << Qt::hex << this;
 }
 
 /**
@@ -144,7 +144,7 @@ void TabManager::onCodeEditChanged(bool changed)
  */
 void TabManager::onNewFileActionTriggered()
 {
-    CodeEdit *currentCodeEdit = new CodeEdit(this);
+    CodeEdit *currentCodeEdit = new CodeEdit(this, "untitled");
     this->addTab(currentCodeEdit, tr("untitled"));
     this->setCurrentWidget(currentCodeEdit);
 
@@ -175,7 +175,7 @@ void TabManager::onSaveFileActionTriggered()
 {
     CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(this->currentWidget());
 
-    if (currentCodeEdit->openedFileInfo.size() == 0) {
+    if (currentCodeEdit->openedFileInfo.isFile() == false) {
         this->onSaveFileAsActionTriggered();
         return;
     }
@@ -217,6 +217,7 @@ void TabManager::onSaveFileAsActionTriggered()
         QTextStream out(&file);
 
         out << currentCodeEdit->toPlainText();
+        currentCodeEdit->openedFileInfo = QFileInfo(fileAbsolutePath);
         this->setTabText(this->currentIndex(), fileInfo.fileName());
 
         file.close();

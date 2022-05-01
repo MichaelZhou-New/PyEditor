@@ -24,6 +24,7 @@ public:
 
 public slots:
     void onOpenFolderTriggered();
+    void onSettingsTriggered();
     void onTreeViewDoubleClicked(const QModelIndex &index);
 
 private:

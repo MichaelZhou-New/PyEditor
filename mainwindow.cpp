@@ -17,6 +17,7 @@
 #include "editor/TabManager.h"
 #include "editor/CodeEdit.h"
 #include "fileBrowser/FileBrowserSortFilterProxyModel.h"
+#include "SettingDialog.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -37,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->addWidget(tabManager);
     splitter->setCollapsible(splitter->indexOf(tabManager), false);
     splitter->setHandleWidth(1);
+    splitter->setStretchFactor(0, 0);
+    splitter->setStretchFactor(1, 1);
 
     fileSystemModel->setRootPath("");
     fileSystemModel->sort(0, Qt::DescendingOrder);
@@ -56,15 +59,14 @@ MainWindow::MainWindow(QWidget *parent)
     fileBrowser->setHeaderHidden(true);
     fileBrowser->setSortingEnabled(true);
     fileBrowser->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    fileBrowser->setMinimumWidth(180);
+    fileBrowser->resize(180, fileBrowser->height());
     fileBrowser->show();
-    fileBrowser->resize(200, fileBrowser->height());
-    fileBrowser->setWindowTitle(tr("资源管理器"));
 
     // setting tabManager
-    tabManager->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    tabManager->setMinimumWidth(430);
+    tabManager->setMinimumWidth(180);
     tabManager->setMinimumHeight(250);
-    tabManager->resize(710, tabManager->height());
+    tabManager->resize(730, tabManager->height());
 
     ui->setupUi(this);
 
@@ -78,7 +80,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->saveFileAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileActionTriggered);
     connect(ui->saveFileAsAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileAsActionTriggered);
 
+    connect(ui->settingsAction, &QAction::triggered, this, &MainWindow::onSettingsTriggered);
+
     connect(this->fileBrowser, &QTreeView::doubleClicked, this, &MainWindow::onTreeViewDoubleClicked);
+
+    tabManager->onNewFileActionTriggered();
 }
 
 MainWindow::~MainWindow()
@@ -108,4 +114,10 @@ void MainWindow::onTreeViewDoubleClicked(const QModelIndex &index)
     QString filePath = fileSystemModel->filePath(fileSystemModelIndex);
 
     this->tabManager->openFile(filePath);
+}
+
+void MainWindow::onSettingsTriggered()
+{
+    SettingDialog *settingDialog = new SettingDialog(this);
+    settingDialog->exec();
 }

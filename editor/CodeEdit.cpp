@@ -160,16 +160,27 @@ void CodeEdit::highlightCurrentLine()
     this->setExtraSelections(extraSelections);
 }
 
+/**
+ * @brief CodeEdit::textHasChanged
+ * @return
+ */
 bool CodeEdit::textHasChanged() const
 {
     return this->_textChanged;
 }
 
+/**
+ * @brief CodeEdit::setTextChangedStatus
+ * @param changed
+ */
 void CodeEdit::setTextChangedStatus(bool changed)
 {
     this->_textChanged = changed;
 }
 
+/**
+ * @brief CodeEdit::onTextChanged
+ */
 void CodeEdit::onTextChanged()
 {
     emit codeEditTextChanged(true);
