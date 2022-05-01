@@ -20,14 +20,12 @@ SettingDialog::SettingDialog(QWidget *parent)
       m_settingList(new QListWidget),
       m_stackedWidget(new QStackedWidget(this))
 {
-    this->setupUI();
-
-    m_headerLabel->setText("设置");
-
+    this->setupUi();
 }
 
-void SettingDialog::setupUI()
+void SettingDialog::setupUi()
 {
+    m_headerLabel->setText("设置");
     this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     this->setMinimumSize(470, 390);
     this->resize(750, 450);
@@ -52,18 +50,9 @@ void SettingDialog::setupUI()
     m_settingList->addItem(tr("外观"));
     m_settingList->addItem(tr("编辑器"));
 
-//    auto stackedWidgetVLayout = new QVBoxLayout;
-
-//    stackedWidgetVLayout->setContentsMargins(0, 0, 0, 0);
-//    stackedWidgetVLayout->setSpacing(0);
-
     m_stackedWidget->addWidget(new KitsSettingPage);
     m_stackedWidget->addWidget(new AppearanceSettingPage);
     m_stackedWidget->addWidget(new EditorSettingPage);
-
-//    static_cast<QTabWidget*>(m_stackedWidget->widget(1))->addTab(new QPlainTextEdit, tr("option2-tab1"));
-//    static_cast<QTabWidget*>(m_stackedWidget->widget(1))->addTab(new QPlainTextEdit, tr("option2-tab2"));
-//    static_cast<QTabWidget*>(m_stackedWidget->widget(2))->addTab(new QPlainTextEdit, tr("option3-tab1"));
 
     QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
                                                     | QDialogButtonBox::Apply

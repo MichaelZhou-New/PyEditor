@@ -16,7 +16,7 @@ class KitsSettingPage : public SettingPage
 public:
     explicit KitsSettingPage(QWidget *parent = nullptr);
 
-    void setupUI();
+    void setupUi();
     void readSettings();
     void apply() override;
 

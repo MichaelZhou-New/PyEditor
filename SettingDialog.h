@@ -51,7 +51,7 @@ class SettingDialog : public QDialog
 public:
     explicit SettingDialog(QWidget *parent = nullptr);
 
-    void setupUI();
+    void setupUi();
 
     QSize sizeHint() const final {
         return this->minimumSize();
@@ -61,8 +61,6 @@ public:
 
     void accept() override final;
     void reject() override final;
-
-//    void closeEvent(QCloseEvent *e) override;
 
 public slots:
     void onSettingListItemClicked(QListWidgetItem *item);
