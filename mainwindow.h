@@ -9,6 +9,7 @@
 
 #include "editor/TabManager.h"
 #include "fileBrowser/FileBrowserSortFilterProxyModel.h"
+#include "statusBar/CursorInfoWidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,6 +27,7 @@ public slots:
     void onOpenFolderTriggered();
     void onSettingsTriggered();
     void onTreeViewDoubleClicked(const QModelIndex &index);
+    void onTabManagerCursorPositionChanged(int line, int col);
 
 private:
     Ui::MainWindow *ui;
@@ -34,5 +36,7 @@ private:
     FileBrowserSortFilterProxyModel *fileBrowserSortFilterProxyModel;
     QFileSystemModel *fileSystemModel;
     TabManager *tabManager;
+
+    CursorInfoWidget *cursorInfoWidget;
 };
 #endif // MAINWINDOW_H

@@ -11,8 +11,6 @@ CONFIG += c++20
 include(./lsp/lsp.pri)
 
 SOURCES += \
-#    CategoryListView.cpp \
-#    CategoryListViewDelegate.cpp \
     SearchDialog.cpp \
     SettingDialog.cpp \
     editor/CodeEdit.cpp \
@@ -25,11 +23,10 @@ SOURCES += \
     settings/AppearanceSettingPage.cpp \
     settings/EditorSettingPage.cpp \
     settings/KitsSettingPage.cpp \
-    settings/SettingPage.cpp
+    settings/SettingPage.cpp \
+    statusBar/CursorInfoWidget.cpp
 
 HEADERS += \
-#    CategoryListView.h \
-#    CategoryListViewDelegate.h \
     SearchDialog.h \
     SettingDialog.h \
     editor/CodeEdit.h \
@@ -41,7 +38,8 @@ HEADERS += \
     settings/AppearanceSettingPage.h \
     settings/EditorSettingPage.h \
     settings/KitsSettingPage.h \
-    settings/SettingPage.h
+    settings/SettingPage.h \
+    statusBar/CursorInfoWidget.h
 
 FORMS += \
     mainwindow.ui \

@@ -21,6 +21,7 @@ TabManager::TabManager(QWidget *parent)
     this->setTabsClosable(true);
 
     connect(this, &TabManager::tabCloseRequested, this, &TabManager::onCloseTabRequest);
+    connect(this, &TabManager::currentChanged, this, &TabManager::onCodeEditCursorPositionChanged);
 
     qDebug() << "tabManager: " << Qt::hex << this;
 }
@@ -50,6 +51,7 @@ void TabManager::openFile(const QString &fileAbsolutePath)
     file.close();
 
     connect(currentCodeEdit, &CodeEdit::modificationChanged, this, &TabManager::onCodeEditChanged);
+    connect(currentCodeEdit, &CodeEdit::cursorPositionChanged, this, &TabManager::onCodeEditCursorPositionChanged);
 }
 
 /**
@@ -79,6 +81,7 @@ void TabManager::openFiles(const QStringList &fileAbsolutePaths)
         file.close();
 
         connect(currentCodeEdit, &CodeEdit::modificationChanged, this, &TabManager::onCodeEditChanged, Qt::UniqueConnection);
+        connect(currentCodeEdit, &CodeEdit::cursorPositionChanged, this, &TabManager::onCodeEditCursorPositionChanged);
     }
 }
 
@@ -149,6 +152,7 @@ void TabManager::onNewFileActionTriggered()
     this->setCurrentWidget(currentCodeEdit);
 
     connect(currentCodeEdit, &CodeEdit::codeEditTextChanged, this, &TabManager::onCodeEditChanged, Qt::UniqueConnection);
+    connect(currentCodeEdit, &CodeEdit::cursorPositionChanged, this, &TabManager::onCodeEditCursorPositionChanged);
 }
 
 /**
@@ -164,7 +168,6 @@ void TabManager::onOpenFileActionTriggered()
     QStringList fileAbsolutePaths(fileDialog.getOpenFileNames());
 
     this->openFiles(fileAbsolutePaths);
-
 }
 
 /**
@@ -225,4 +228,21 @@ void TabManager::onSaveFileAsActionTriggered()
         this->onCodeEditChanged(false);
     }
 
+}
+
+/**
+ * @brief TabManager::onCodeEditCursorPositionChanged
+ */
+void TabManager::onCodeEditCursorPositionChanged()
+{
+    if (this->count() > 0) {
+        CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(this->currentWidget());
+
+        QTextCursor textCursor = currentCodeEdit->textCursor();
+        int line = textCursor.blockNumber();
+        int col = textCursor.columnNumber();
+
+        qDebug() << "line: " << line << " col: " << col;
+        emit this->codeEditCursorChanged(line, col);
+    }
 }

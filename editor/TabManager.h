@@ -19,6 +19,11 @@ public slots:
     void onOpenFileActionTriggered();
     void onSaveFileActionTriggered();
     void onSaveFileAsActionTriggered();
+
+    void onCodeEditCursorPositionChanged();
+
+signals:
+    void codeEditCursorChanged(int line, int col);
 };
 
 #endif // TABMANAGER_H

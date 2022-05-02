@@ -8,6 +8,8 @@
 #include <QModelIndex>
 #include <QDir>
 #include <QFileDialog>
+#include <QTextCursor>
+#include <QSpacerItem>
 
 #include <QDebug>
 
@@ -18,6 +20,7 @@
 #include "editor/CodeEdit.h"
 #include "fileBrowser/FileBrowserSortFilterProxyModel.h"
 #include "SettingDialog.h"
+#include "statusBar/CursorInfoWidget.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -26,7 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
       fileBrowser(new QTreeView),
       fileBrowserSortFilterProxyModel(new FileBrowserSortFilterProxyModel),
       fileSystemModel(new QFileSystemModel),
-      tabManager(new TabManager)
+      tabManager(new TabManager),
+      cursorInfoWidget(new CursorInfoWidget)
 {
     // setting parents
     tabManager->setParent(splitter);
@@ -72,6 +76,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->setCentralWidget(this->splitter);
     this->setWindowTitle(tr("PyEditor"));
+
+    // setting cursorInfoWidget
+    statusBar()->addPermanentWidget(cursorInfoWidget);
+    connect(tabManager, &TabManager::codeEditCursorChanged, this, &MainWindow::onTabManagerCursorPositionChanged);
 
     // set connection
     connect(ui->newFileAction, &QAction::triggered, this->tabManager, &TabManager::onNewFileActionTriggered);
@@ -120,4 +128,9 @@ void MainWindow::onSettingsTriggered()
 {
     SettingDialog *settingDialog = new SettingDialog(this);
     settingDialog->exec();
+}
+
+void MainWindow::onTabManagerCursorPositionChanged(int line, int col)
+{
+    cursorInfoWidget->setCursorPosition(line, col);
 }
