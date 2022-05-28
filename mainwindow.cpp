@@ -10,6 +10,10 @@
 #include <QFileDialog>
 #include <QTextCursor>
 #include <QSpacerItem>
+#include <QToolBar>
+#include <QProcess>
+#include <QSettings>
+#include <cstdlib>
 
 #include <QDebug>
 
@@ -74,8 +78,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->setupUi(this);
 
+
     this->setCentralWidget(this->splitter);
     this->setWindowTitle(tr("PyEditor"));
+
+    // setting toolbar
+    QToolBar *toolBar = addToolBar("toolBar");
+    toolBar->addAction("&撤销");
+    toolBar->addAction("&重做");
+    toolBar->addAction("&执行", this, &MainWindow::onExecuteActionTriggered);
+    toolBar->addAction("&控制台", this, &MainWindow::onOpenConsoleActionTriggered);
 
     // setting cursorInfoWidget
     statusBar()->addPermanentWidget(cursorInfoWidget);
@@ -100,6 +112,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+/**
+ * @brief MainWindow::onOpenFolderTriggered
+ */
 void MainWindow::onOpenFolderTriggered()
 {
     QFileDialog dirDialog;
@@ -115,6 +130,10 @@ void MainWindow::onOpenFolderTriggered()
     }
 }
 
+/**
+ * @brief MainWindow::onTreeViewDoubleClicked
+ * @param index
+ */
 void MainWindow::onTreeViewDoubleClicked(const QModelIndex &index)
 {
     QModelIndex fileSystemModelIndex = fileBrowserSortFilterProxyModel->mapToSource(index);
@@ -124,13 +143,78 @@ void MainWindow::onTreeViewDoubleClicked(const QModelIndex &index)
     this->tabManager->openFile(filePath);
 }
 
+/**
+ * @brief MainWindow::onSettingsTriggered
+ */
 void MainWindow::onSettingsTriggered()
 {
     SettingDialog *settingDialog = new SettingDialog(this);
     settingDialog->exec();
+
+    for (int i = 0; i < tabManager->count(); i++) {
+        CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(tabManager->widget(i));
+        currentCodeEdit->readSettings();
+    }
 }
 
+/**
+ * @brief MainWindow::onTabManagerCursorPositionChanged
+ * @param line
+ * @param col
+ */
 void MainWindow::onTabManagerCursorPositionChanged(int line, int col)
 {
     cursorInfoWidget->setCursorPosition(line, col);
+}
+
+/**
+ * @brief MainWindow::onExecuteActionTriggered
+ */
+void MainWindow::onExecuteActionTriggered()
+{
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "dylan", "PyEditor");
+    QString interpreterPath = settings.value("kits/interpreterPath").toString();
+    if (interpreterPath.length() == 0) {
+        QMessageBox::warning(this, "Warning", "未指定解释器或解释器路径有误！");
+        return;
+    }
+
+    CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(tabManager->currentWidget());
+    if (!currentCodeEdit->openedFileInfo.isFile()) {
+        QMessageBox::warning(this, "Warning", "请先保存文件！");
+        return;
+    }
+//    QProcess process;
+//    process.setProgram("C:\\Windows\\System32\\cmd.exe");
+//    process.setArguments({ "/K", "D:\\Program Files\\Python\\Python39\\python.exe", currentCodeEdit->openedFileInfo.absoluteFilePath() });
+//    process.startDetached();
+    QString program;
+    QStringList arguments;
+#ifdef _WIN32
+    program = "cmd.exe";
+    arguments << "/K" << ( "\"" + interpreterPath + "\"") << currentCodeEdit->openedFileInfo.absoluteFilePath();
+    qDebug() << program + " " + arguments.join(" ");
+    std::system((program + " " + arguments.join(" ")).toStdString().c_str());
+#elif __linux__
+    QMessageBox::warning(this, "Warning", "暂不支持Linux");
+#else
+    QMessageBox::warning(this, "Warning", "该功能仅支持Windows");
+#endif
+}
+
+/**
+ * @brief MainWindow::onOpenConsoleActionTriggered
+ */
+void MainWindow::onOpenConsoleActionTriggered()
+{
+    QString program;
+    QStringList arguments;
+#ifdef _WIN32
+    program = "cmd.exe";
+    std::system((program + " " + arguments.join(" ")).toStdString().c_str());
+#elif __linux__
+    QMessageBox::warning(this, "Warning", "暂不支持Linux");
+#else
+    QMessageBox::warning(this, "Warning", "该功能仅支持Windows");
+#endif
 }

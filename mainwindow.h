@@ -28,6 +28,8 @@ public slots:
     void onSettingsTriggered();
     void onTreeViewDoubleClicked(const QModelIndex &index);
     void onTabManagerCursorPositionChanged(int line, int col);
+    void onExecuteActionTriggered();
+    void onOpenConsoleActionTriggered();
 
 private:
     Ui::MainWindow *ui;

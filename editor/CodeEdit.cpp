@@ -3,31 +3,68 @@
 #include <QTextBlock>
 #include <QColor>
 #include <QDebug>
+#include <QSettings>
 
 #include "CodeEdit.h"
 #include "TabManager.h"
+
+#include "lsp-cpp/include/LSPUri.hpp"
+#include "utils/JsonUtil.h"
 
 CodeEdit::CodeEdit(QWidget *parent, const QString &fileAbsolutePath)
     : QPlainTextEdit(parent),
       openedFileInfo(fileAbsolutePath),
       lineNumberArea(new LineNumberArea(this)),
-      highlighter(new Highlighter(this->document())),
-      _textChanged(false)
+      _textChanged(false),
+      lspClient(new LSPClient("E:\\Personal\\Workspaces\\LearnQt\\PyEditor\\PyEditor\\lspserver.exe", { })),
+      tempFile(openedFileInfo.fileName() + "XXXXXX.py")
 {
     this->setTabStopWidth(40);
     this->setTabStopDistance(40.00);
-    this->setFont(QFont("Consolas", 12, 10));
     this->setWordWrapMode(QTextOption::NoWrap);
     this->setFrameStyle(QFrame::NoFrame);
+    this->readSettings();
+
+    this->updateLineNumberAreaWidth(0);
+    this->highlightCurrentLine();
+
+    // setting lspclient connection
+    connect(this->document(), &QTextDocument::contentsChanged, this, &CodeEdit::onContentChanged);
+    connect(lspClient, &LSPClient::onDocumentColorResponse, this, &CodeEdit::onLSPClientDocumentColorResponseReceived);
 
     connect(this, &CodeEdit::blockCountChanged, this, &CodeEdit::updateLineNumberAreaWidth);
     connect(this, &CodeEdit::updateRequest, this, &CodeEdit::updateLineNumberArea);
     connect(this, &CodeEdit::cursorPositionChanged, this, &CodeEdit::highlightCurrentLine);
-
     connect(this, &CodeEdit::textChanged, this, &CodeEdit::onTextChanged);
+}
 
-    this->updateLineNumberAreaWidth(0);
-    this->highlightCurrentLine();
+CodeEdit::~CodeEdit()
+{
+    lspClient->shutdown();
+    delete lspClient;
+}
+
+/**
+ * read settings from .ini
+ * @brief readSettings
+ */
+void CodeEdit::readSettings()
+{
+    QString fontFamily = "Consolas";
+    int fontSize = 12;
+    int fontWeight = 10;
+
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "dylan", "PyEditor");
+    QVariant fontFamilyVariant = settings.value("editor/fontFamily");
+    QVariant fontSizeVariant = settings.value("editor/fontSize");
+    if (!fontFamilyVariant.isNull()) {
+        fontFamily = fontFamilyVariant.value<QFont>().family();
+    }
+    if (!fontSizeVariant.isNull()) {
+        fontSize = fontSizeVariant.value<int>();
+    }
+
+    this->setFont(QFont(fontFamily, fontSize, fontWeight));
 }
 
 /**
@@ -184,4 +221,60 @@ void CodeEdit::setTextChangedStatus(bool changed)
 void CodeEdit::onTextChanged()
 {
     emit codeEditTextChanged(true);
+}
+
+/**
+ * @brief CodeEdit::onContentChanged
+ */
+void CodeEdit::onContentChanged()
+{
+    if (this->tempFile.open()) {
+        this->tempFile.write(this->toPlainText().toLocal8Bit());
+        lspClient->documentColor(DocumentUri(QFileInfo(tempFile).absoluteFilePath().toStdString()));
+        this->tempFile.close();
+    }
+    //lspClient->documentColor(DocumentUri(openedFileInfo.absoluteFilePath().toStdString()));
+}
+
+/**
+ * @brief CodeEdit::onLSPClientDocumentColorResponseReceived
+ * @param id
+ * @param response
+ */
+void CodeEdit::onLSPClientDocumentColorResponseReceived(QString id, QJsonArray response)
+{
+//    qDebug() << "received:";
+//    qDebug() << "id: " << id;
+//    qDebug() << "response: " << response;
+//    this->highlighter->setColorInformations(response);
+
+    disconnect(this->document(), &QTextDocument::contentsChanged, this, &CodeEdit::onContentChanged);
+    qDebug() << "highlightBlock: ";
+    QTextCharFormat textCharFormat;
+    QVariantList colorInforList = response.toVariantList();
+    for (auto iter = colorInforList.begin(); iter != colorInforList.end(); ++iter) {
+        QJsonObject jsonObject = iter->toJsonObject();
+
+        int startLine   = JsonUtil::getValue(jsonObject, "range/start/line").toInt();
+        int startOffset = JsonUtil::getValue(jsonObject, "range/start/character").toInt();
+        int endLine     = JsonUtil::getValue(jsonObject, "range/end/line").toInt();
+        int endOffset   = JsonUtil::getValue(jsonObject, "range/end/character").toInt();
+        int red         = JsonUtil::getValue(jsonObject, "color/red").toInt();
+        int green       = JsonUtil::getValue(jsonObject, "color/green").toInt();
+        int blue        = JsonUtil::getValue(jsonObject, "color/blue").toInt();
+
+        QTextBlock startTextBlock = this->document()->findBlockByLineNumber(startLine);
+        int startPosition = startTextBlock.position() + startOffset;
+        QTextBlock endTextBlock = this->document()->findBlockByLineNumber(endLine);
+        int endPosition = endTextBlock.position() + endOffset;
+
+        textCharFormat.setForeground(QColor(red, green, blue, 255));
+
+        QTextCursor textCursor = this->textCursor();
+        textCursor.setPosition(startPosition, QTextCursor::MoveAnchor);
+        textCursor.setPosition(endPosition, QTextCursor::KeepAnchor);
+        textCursor.setCharFormat(textCharFormat);
+        textCursor.clearSelection();
+    }
+    connect(this->document(), &QTextDocument::contentsChanged, this, &CodeEdit::onContentChanged);
 }

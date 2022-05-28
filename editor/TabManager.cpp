@@ -108,11 +108,13 @@ void TabManager::onCloseTabRequest(int tabIndex)
                 this->onSaveFileActionTriggered();
             }
             this->removeTab(tabIndex);
-            delete this->widget(tabIndex);
+//            delete this->widget(tabIndex);
+            delete currentCodeEdit;
         }
     } else {
         this->removeTab(tabIndex);
-        delete this->widget(tabIndex);
+//        delete this->widget(tabIndex);
+        delete currentCodeEdit;
     }
 }
 

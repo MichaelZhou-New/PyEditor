@@ -3,9 +3,11 @@
 
 #include <QPlainTextEdit>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QTemporaryFile>
 
 #include "LineNumberArea.h"
-#include "../highlighter/highlighter.h"
+#include "lspClient/LSPClient.hpp"
 
 class LineNumberArea;
 
@@ -14,7 +16,9 @@ class CodeEdit : public QPlainTextEdit
     Q_OBJECT
 public:
     CodeEdit(QWidget *parent = nullptr, const QString &fileAbsolutePath = "");
+    ~CodeEdit();
 
+    void readSettings();
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
     bool textHasChanged() const;
@@ -25,6 +29,8 @@ signals:
 public slots:
     void setTextChangedStatus(bool hasModified = true);
     void onTextChanged();
+    void onContentChanged();
+    void onLSPClientDocumentColorResponseReceived(QString id, QJsonArray response);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -40,8 +46,10 @@ public:
 
 private:
     LineNumberArea *lineNumberArea;
-    Highlighter *highlighter;
     bool _textChanged;
+
+    LSPClient *lspClient;
+    QTemporaryFile tempFile;
 };
 
 #endif // CODEEDIT_H

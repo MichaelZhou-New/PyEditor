@@ -4,7 +4,7 @@ Date: 2022-04-03 15:13:25
 LastEditTime: 2022-04-03 15:15:15
 LastEditors: dylan
 Description: 
-FilePath: \Srce:\Personal\Workspaces\PyEditor\PyEditor\test\test.py
+FilePath: \Src:\Personal\Workspaces\PyEditor\PyEditor\test\test.py
 '''
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-

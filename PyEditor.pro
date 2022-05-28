@@ -9,6 +9,7 @@ CONFIG += c++20
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 include(./lsp/lsp.pri)
+include(./lsp-cpp/lsp-cpp.pri)
 
 SOURCES += \
     SearchDialog.cpp \
@@ -17,14 +18,16 @@ SOURCES += \
     editor/LineNumberArea.cpp \
     editor/TabManager.cpp \
     fileBrowser/FileBrowserSortFilterProxyModel.cpp \
-    highlighter/highlighter.cpp \
+#    highlighter/highlighter.cpp \
+    lspClient/LSPClient.cpp \
     main.cpp \
     mainwindow.cpp \
     settings/AppearanceSettingPage.cpp \
     settings/EditorSettingPage.cpp \
     settings/KitsSettingPage.cpp \
     settings/SettingPage.cpp \
-    statusBar/CursorInfoWidget.cpp
+    statusBar/CursorInfoWidget.cpp \
+    utils/JsonUtil.cpp
 
 HEADERS += \
     SearchDialog.h \
@@ -33,13 +36,15 @@ HEADERS += \
     editor/LineNumberArea.h \
     editor/TabManager.h \
     fileBrowser/FileBrowserSortFilterProxyModel.h \
-    highlighter/highlighter.h \
+#    highlighter/highlighter.h \
+    lspClient/LSPClient.hpp \
     mainwindow.h \
     settings/AppearanceSettingPage.h \
     settings/EditorSettingPage.h \
     settings/KitsSettingPage.h \
     settings/SettingPage.h \
-    statusBar/CursorInfoWidget.h
+    statusBar/CursorInfoWidget.h \
+    utils/JsonUtil.h
 
 FORMS += \
     mainwindow.ui \
