@@ -11,7 +11,6 @@ CONFIG += c++20
 include(./lsp-cpp/lsp-cpp.pri)
 
 SOURCES += \
-    SearchDialog.cpp \
     SettingDialog.cpp \
     editor/CodeEdit.cpp \
     editor/LineNumberArea.cpp \
@@ -28,7 +27,6 @@ SOURCES += \
     utils/JsonUtil.cpp
 
 HEADERS += \
-    SearchDialog.h \
     SettingDialog.h \
     editor/CodeEdit.h \
     editor/LineNumberArea.h \
