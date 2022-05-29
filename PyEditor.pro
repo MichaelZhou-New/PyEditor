@@ -17,7 +17,6 @@ SOURCES += \
     editor/LineNumberArea.cpp \
     editor/TabManager.cpp \
     fileBrowser/FileBrowserSortFilterProxyModel.cpp \
-#    highlighter/highlighter.cpp \
     lspClient/LSPClient.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -35,7 +34,6 @@ HEADERS += \
     editor/LineNumberArea.h \
     editor/TabManager.h \
     fileBrowser/FileBrowserSortFilterProxyModel.h \
-#    highlighter/highlighter.h \
     lspClient/LSPClient.hpp \
     mainwindow.h \
     settings/AppearanceSettingPage.h \
