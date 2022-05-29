@@ -59,15 +59,8 @@
     </property>
     <addaction name="aboutAction"/>
    </widget>
-   <widget class="QMenu" name="menu">
-    <property name="title">
-     <string>搜索(S)</string>
-    </property>
-    <addaction name="searchAction"/>
-   </widget>
    <addaction name="file"/>
    <addaction name="edit"/>
-   <addaction name="menu"/>
    <addaction name="help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">

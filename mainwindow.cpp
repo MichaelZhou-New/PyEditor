@@ -13,6 +13,8 @@
 #include <QToolBar>
 #include <QProcess>
 #include <QSettings>
+#include <QLineEdit>
+#include <QAction>
 #include <cstdlib>
 
 #include <QDebug>
@@ -33,8 +35,62 @@ MainWindow::MainWindow(QWidget *parent)
       fileBrowser(new QTreeView),
       fileBrowserSortFilterProxyModel(new FileBrowserSortFilterProxyModel),
       fileSystemModel(new QFileSystemModel),
-      tabManager(new TabManager),
-      cursorInfoWidget(new CursorInfoWidget)
+      tabManager(new TabManager(this)),
+      cursorInfoWidget(new CursorInfoWidget(this)),
+      m_searchLineEdit(new QLineEdit(this))
+{
+    ui->setupUi(this);
+    this->setupToolBars();
+    this->setupUi();
+
+    QDir::setCurrent(QDir::homePath());
+
+    // set connections
+    connect(ui->newFileAction, &QAction::triggered, this->tabManager, &TabManager::onNewFileActionTriggered);
+    connect(ui->openFileAction, &QAction::triggered, this->tabManager, &TabManager::onOpenFileActionTriggered);
+    connect(ui->openFolderAction, &QAction::triggered, this, &MainWindow::onOpenFolderTriggered);
+    connect(ui->saveFileAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileActionTriggered);
+    connect(ui->saveFileAsAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileAsActionTriggered);
+
+    connect(ui->settingsAction, &QAction::triggered, this, &MainWindow::onSettingsTriggered);
+    connect(this->fileBrowser, &QTreeView::doubleClicked, this, &MainWindow::onTreeViewDoubleClicked);
+
+    tabManager->onNewFileActionTriggered();
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+/**
+ * @brief MainWindow::setupToolBars
+ */
+void MainWindow::setupToolBars()
+{
+    QToolBar *editToolBar = addToolBar("Edit");
+    editToolBar->addAction(ui->undoAction);
+    editToolBar->addAction(ui->redoAction);
+
+    QToolBar *kitsToolBar = addToolBar("Kits");
+    kitsToolBar->addAction(tr("&执行"), this, &MainWindow::onExecuteActionTriggered);
+    kitsToolBar->addAction(tr("&控制台"), this, &MainWindow::onOpenConsoleActionTriggered);
+
+    QToolBar *searchToolBar = addToolBar("search");
+    m_searchLineEdit->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    searchToolBar->addWidget(m_searchLineEdit);
+//    QAction *prevResultAction = new QAction(tr("上一个"), this);
+//    QAction *nextResultAction = new QAction(tr("上一个"), this);
+//    searchToolBar->addAction(prevResultAction);
+//    searchToolBar->addAction(nextResultAction);
+    searchToolBar->addAction(tr("&上一个"), this, &MainWindow::onPrevResultActionTriggered);
+    searchToolBar->addAction(tr("&下一个"), this, &MainWindow::onNextResultActionTriggered);
+}
+
+/**
+ * @brief MainWindow::setupUi
+ */
+void MainWindow::setupUi()
 {
     // setting parents
     tabManager->setParent(splitter);
@@ -55,7 +111,7 @@ MainWindow::MainWindow(QWidget *parent)
     fileBrowserSortFilterProxyModel->setSourceModel(fileSystemModel);
     fileBrowser->setModel(fileBrowserSortFilterProxyModel);
 
-    const QModelIndex rootIndex = fileSystemModel->index(QDir::cleanPath(""));
+    const QModelIndex rootIndex = fileSystemModel->index(QDir::homePath());
     if (rootIndex.isValid()) {
         fileBrowser->setRootIndex(fileBrowserSortFilterProxyModel->mapFromSource(rootIndex));
     }
@@ -76,40 +132,12 @@ MainWindow::MainWindow(QWidget *parent)
     tabManager->setMinimumHeight(250);
     tabManager->resize(730, tabManager->height());
 
-    ui->setupUi(this);
-
-
     this->setCentralWidget(this->splitter);
     this->setWindowTitle(tr("PyEditor"));
-
-    // setting toolbar
-    QToolBar *toolBar = addToolBar("toolBar");
-    toolBar->addAction("&撤销");
-    toolBar->addAction("&重做");
-    toolBar->addAction("&执行", this, &MainWindow::onExecuteActionTriggered);
-    toolBar->addAction("&控制台", this, &MainWindow::onOpenConsoleActionTriggered);
 
     // setting cursorInfoWidget
     statusBar()->addPermanentWidget(cursorInfoWidget);
     connect(tabManager, &TabManager::codeEditCursorChanged, this, &MainWindow::onTabManagerCursorPositionChanged);
-
-    // set connection
-    connect(ui->newFileAction, &QAction::triggered, this->tabManager, &TabManager::onNewFileActionTriggered);
-    connect(ui->openFileAction, &QAction::triggered, this->tabManager, &TabManager::onOpenFileActionTriggered);
-    connect(ui->openFolderAction, &QAction::triggered, this, &MainWindow::onOpenFolderTriggered);
-    connect(ui->saveFileAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileActionTriggered);
-    connect(ui->saveFileAsAction, &QAction::triggered, this->tabManager, &TabManager::onSaveFileAsActionTriggered);
-
-    connect(ui->settingsAction, &QAction::triggered, this, &MainWindow::onSettingsTriggered);
-
-    connect(this->fileBrowser, &QTreeView::doubleClicked, this, &MainWindow::onTreeViewDoubleClicked);
-
-    tabManager->onNewFileActionTriggered();
-}
-
-MainWindow::~MainWindow()
-{
-    delete ui;
 }
 
 /**
@@ -123,6 +151,8 @@ void MainWindow::onOpenFolderTriggered()
     QString absoluteDir(dirDialog.getExistingDirectory(this));
 
     if (absoluteDir.length() != 0) {
+        QDir::setCurrent(absoluteDir);
+        qDebug() << QDir::currentPath();
         const QModelIndex rootIndex = fileSystemModel->index(absoluteDir);
         if (rootIndex.isValid()) {
             fileBrowser->setRootIndex(fileBrowserSortFilterProxyModel->mapFromSource(rootIndex));
@@ -139,7 +169,6 @@ void MainWindow::onTreeViewDoubleClicked(const QModelIndex &index)
     QModelIndex fileSystemModelIndex = fileBrowserSortFilterProxyModel->mapToSource(index);
 
     QString filePath = fileSystemModel->filePath(fileSystemModelIndex);
-
     this->tabManager->openFile(filePath);
 }
 
@@ -184,17 +213,14 @@ void MainWindow::onExecuteActionTriggered()
         QMessageBox::warning(this, "Warning", "请先保存文件！");
         return;
     }
-//    QProcess process;
-//    process.setProgram("C:\\Windows\\System32\\cmd.exe");
-//    process.setArguments({ "/K", "D:\\Program Files\\Python\\Python39\\python.exe", currentCodeEdit->openedFileInfo.absoluteFilePath() });
-//    process.startDetached();
+
     QString program;
     QStringList arguments;
 #ifdef _WIN32
     program = "cmd.exe";
     arguments << "/K" << ( "\"" + interpreterPath + "\"") << currentCodeEdit->openedFileInfo.absoluteFilePath();
     qDebug() << program + " " + arguments.join(" ");
-    std::system((program + " " + arguments.join(" ")).toStdString().c_str());
+    std::system(("start " + program + " " + arguments.join(" ")).toStdString().c_str());
 #elif __linux__
     QMessageBox::warning(this, "Warning", "暂不支持Linux");
 #else
@@ -211,10 +237,54 @@ void MainWindow::onOpenConsoleActionTriggered()
     QStringList arguments;
 #ifdef _WIN32
     program = "cmd.exe";
-    std::system((program + " " + arguments.join(" ")).toStdString().c_str());
+    std::system(("start " + program + " " + arguments.join(" ")).toStdString().c_str());
 #elif __linux__
     QMessageBox::warning(this, "Warning", "暂不支持Linux");
 #else
     QMessageBox::warning(this, "Warning", "该功能仅支持Windows");
 #endif
+}
+
+/**
+ * @brief MainWindow::onPrevResultActionTriggered
+ */
+void MainWindow::onPrevResultActionTriggered()
+{
+    CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(tabManager->currentWidget());
+    QString text = currentCodeEdit->toPlainText();
+    QTextCursor textCursor = currentCodeEdit->textCursor();
+    int pos = textCursor.selectionStart();
+    if (pos != 0) {
+        if (m_searchLineEdit->text() != m_regExp.pattern()) {
+            m_regExp.setPattern(m_searchLineEdit->text());
+        }
+        pos = m_regExp.lastIndexIn(text, pos - 1);
+        if (pos != -1) {
+            textCursor.setPosition(pos + m_regExp.matchedLength(), QTextCursor::MoveAnchor);
+            textCursor.setPosition(pos, QTextCursor::KeepAnchor);
+            currentCodeEdit->setTextCursor(textCursor);
+        }
+    }
+}
+
+/**
+ * @brief MainWindow::onNextResultActionTriggered
+ */
+void MainWindow::onNextResultActionTriggered()
+{
+    CodeEdit *currentCodeEdit = static_cast<CodeEdit*>(tabManager->currentWidget());
+    QString text = currentCodeEdit->toPlainText();
+    QTextCursor textCursor = currentCodeEdit->textCursor();
+    int pos = textCursor.selectionEnd();
+    if (pos != text.length()) {
+        if (m_searchLineEdit->text() != m_regExp.pattern()) {
+            m_regExp.setPattern(m_searchLineEdit->text());
+        }
+        pos = m_regExp.indexIn(text, pos);
+        if (pos != -1) {
+            textCursor.setPosition(pos, QTextCursor::MoveAnchor);
+            textCursor.setPosition(pos + m_regExp.matchedLength(), QTextCursor::KeepAnchor);
+            currentCodeEdit->setTextCursor(textCursor);
+        }
+    }
 }
