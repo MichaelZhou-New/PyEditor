@@ -4,6 +4,8 @@
 #include <QColor>
 #include <QDebug>
 #include <QSettings>
+#include <QTextCursor>
+#include <QDir>
 
 #include "CodeEdit.h"
 #include "TabManager.h"
@@ -17,7 +19,7 @@ CodeEdit::CodeEdit(QWidget *parent, const QString &fileAbsolutePath)
       lineNumberArea(new LineNumberArea(this)),
       _textChanged(false),
       lspClient(new LSPClient("E:\\Personal\\Workspaces\\LearnQt\\PyEditor\\PyEditor\\lspserver.exe", { })),
-      tempFile(openedFileInfo.fileName() + "XXXXXX.py")
+      tempFile(QDir::tempPath() + openedFileInfo.fileName() + "XXXXXX.py")
 {
     this->setTabStopWidth(40);
     this->setTabStopDistance(40.00);
@@ -27,6 +29,10 @@ CodeEdit::CodeEdit(QWidget *parent, const QString &fileAbsolutePath)
 
     this->updateLineNumberAreaWidth(0);
     this->highlightCurrentLine();
+
+    QTextCursor textCursor = this->textCursor();
+    textCursor.setPosition(0);
+    this->setTextCursor(textCursor);
 
     // setting lspclient connection
     connect(this->document(), &QTextDocument::contentsChanged, this, &CodeEdit::onContentChanged);
